@@ -1,0 +1,332 @@
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { ChevronRight, Star, Trophy, ArrowRight, CheckCircle, Circle } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useToast } from "@/hooks/use-toast";
+import { useButtonSound } from "@/hooks/useButtonSound";
+
+const Index = () => {
+  const [step, setStep] = useState(1);
+  const [score, setScore] = useState(0);
+  const [answers, setAnswers] = useState({
+    metabolismo: "",
+    dieta: "",
+    tentativas: "",
+    frustracoes: ""
+  });
+  const totalSteps = 6;
+  const { toast } = useToast();
+  const successAudioRef = useRef<HTMLAudioElement>(null);
+  const playButtonSound = useButtonSound();
+
+  useEffect(() => {
+    if (step === 6 && successAudioRef.current) {
+      successAudioRef.current.currentTime = 0;
+      successAudioRef.current.play();
+    }
+  }, [step]);
+
+  const handleNext = () => {
+    const newStep = Math.min(step + 1, totalSteps);
+    setStep(newStep);
+    
+    if (newStep > step) {
+      const pointsToAdd = 10 + (step * 5);
+      setScore((prev) => prev + pointsToAdd);
+      
+      toast({
+        title: "Nova conquista!",
+        description: `Você ganhou +${pointsToAdd} pontos de conhecimento!`,
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleSelect = (question, value) => {
+    setAnswers(prev => ({
+      ...prev,
+      [question]: value
+    }));
+  };
+
+  const isQuestionAnswered = (question) => {
+    return answers[question] !== "";
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#f8f9fa] to-[#e9ecef] p-6">
+      <audio ref={successAudioRef} src="/success-ding.mp3" preload="auto" />
+      <div className="max-w-3xl mx-auto mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-[#1A1F2C]">A Malandragem dos Nutricionistas</h2>
+          <div className="flex items-center gap-2">
+            <Star className="text-[#9b87f5]" />
+            <span className="font-bold">{score} pontos</span>
+          </div>
+        </div>
+        <Progress value={(step / totalSteps) * 100} className="h-2 bg-[#e5deff]" />
+        <p className="text-sm text-gray-600 mt-2">Etapa {step} de {totalSteps}</p>
+      </div>
+
+      <div className="max-w-3xl mx-auto">
+        {step === 1 && (
+          <Card className="p-6 hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
+            <div className="space-y-4">
+              <Trophy className="w-12 h-12 text-[#9b87f5] mx-auto" />
+              <h3 className="text-xl font-bold text-center">Descubra por que você não consegue emagrecer!</h3>
+              <p className="text-center text-gray-600">
+                Prepare-se para descobrir os segredos que os nutricionistas tradicionais 
+                <span className="font-semibold text-[#9b87f5]"> não querem que você saiba</span>.
+                Faça nosso diagnóstico e ganhe acesso a informações exclusivas.
+              </p>
+              <Button 
+                onClick={(e) => { playButtonSound(); handleNext(); }}
+                className="w-full bg-[#9b87f5] hover:bg-[#7E69AB] transition-colors"
+              >
+                Iniciar Diagnóstico <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {step === 2 && (
+          <Card className="p-6 hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold">Como você descreveria seu metabolismo?</h3>
+              <RadioGroup 
+                value={answers.metabolismo} 
+                onValueChange={(value) => handleSelect('metabolismo', value)}
+                className="space-y-3"
+              >
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="lento" id="lento" />
+                  <label htmlFor="lento" className="flex-1 cursor-pointer">Lento - Ganho peso facilmente</label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="normal" id="normal" />
+                  <label htmlFor="normal" className="flex-1 cursor-pointer">Normal - Mantenho o peso com algum esforço</label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="rapido" id="rapido" />
+                  <label htmlFor="rapido" className="flex-1 cursor-pointer">Rápido - Tenho dificuldade para ganhar peso</label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="nao-sei" id="nao-sei" />
+                  <label htmlFor="nao-sei" className="flex-1 cursor-pointer">Não sei dizer</label>
+                </div>
+              </RadioGroup>
+              <Button 
+                onClick={(e) => { playButtonSound(); handleNext(); }}
+                disabled={!isQuestionAnswered('metabolismo')}
+                className="w-full bg-[#9b87f5] hover:bg-[#7E69AB] transition-colors"
+              >
+                Continuar <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {step === 3 && (
+          <Card className="p-6 hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold">Qual tipo de dieta você já tentou?</h3>
+              <RadioGroup 
+                value={answers.dieta} 
+                onValueChange={(value) => handleSelect('dieta', value)}
+                className="space-y-3"
+              >
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="low-carb" id="low-carb" />
+                  <label htmlFor="low-carb" className="flex-1 cursor-pointer">Low Carb / Cetogênica</label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="jejum" id="jejum" />
+                  <label htmlFor="jejum" className="flex-1 cursor-pointer">Jejum Intermitente</label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="restricao" id="restricao" />
+                  <label htmlFor="restricao" className="flex-1 cursor-pointer">Restrição Calórica</label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="outras" id="outras" />
+                  <label htmlFor="outras" className="flex-1 cursor-pointer">Várias diferentes</label>
+                </div>
+              </RadioGroup>
+              <Button 
+                onClick={(e) => { playButtonSound(); handleNext(); }}
+                disabled={!isQuestionAnswered('dieta')}
+                className="w-full bg-[#9b87f5] hover:bg-[#7E69AB] transition-colors"
+              >
+                Próxima Etapa <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {step === 4 && (
+          <Card className="p-6 hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold">Quantas vezes você já tentou emagrecer?</h3>
+              <RadioGroup 
+                value={answers.tentativas} 
+                onValueChange={(value) => handleSelect('tentativas', value)}
+                className="space-y-3"
+              >
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="1-2" id="1-2" />
+                  <label htmlFor="1-2" className="flex-1 cursor-pointer">1-2 vezes</label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="3-5" id="3-5" />
+                  <label htmlFor="3-5" className="flex-1 cursor-pointer">3-5 vezes</label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="5+" id="5+" />
+                  <label htmlFor="5+" className="flex-1 cursor-pointer">Mais de 5 vezes</label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="constante" id="constante" />
+                  <label htmlFor="constante" className="flex-1 cursor-pointer">Estou sempre tentando</label>
+                </div>
+              </RadioGroup>
+              <Button 
+                onClick={(e) => { playButtonSound(); handleNext(); }}
+                disabled={!isQuestionAnswered('tentativas')}
+                className="w-full bg-[#9b87f5] hover:bg-[#7E69AB] transition-colors"
+              >
+                Continuar <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {step === 5 && (
+          <Card className="p-6 hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold">O que mais te frustra no processo de emagrecimento?</h3>
+              <RadioGroup 
+                value={answers.frustracoes} 
+                onValueChange={(value) => handleSelect('frustracoes', value)}
+                className="space-y-3"
+              >
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="fome" id="fome" />
+                  <label htmlFor="fome" className="flex-1 cursor-pointer">Fome constante e ansiedade</label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="resultados" id="resultados" />
+                  <label htmlFor="resultados" className="flex-1 cursor-pointer">Resultados lentos ou inexistentes</label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="efeito" id="efeito" />
+                  <label htmlFor="efeito" className="flex-1 cursor-pointer">Efeito sanfona após parar a dieta</label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-md hover:bg-[#e5deff] transition-colors">
+                  <RadioGroupItem value="complicado" id="complicado" />
+                  <label htmlFor="complicado" className="flex-1 cursor-pointer">Ter que contar calorias e macros</label>
+                </div>
+              </RadioGroup>
+              <Button 
+                onClick={(e) => { playButtonSound(); handleNext(); }}
+                disabled={!isQuestionAnswered('frustracoes')}
+                className="w-full bg-[#9b87f5] hover:bg-[#7E69AB] transition-colors"
+              >
+                Ver Meus Resultados <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {step === 6 && (
+          <Card className="p-6 hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm animate-fade-in">
+            <div className="space-y-6 text-center">
+              <div className="w-20 h-20 rounded-full bg-[#e5deff] flex items-center justify-center mx-auto pulse">
+                <CheckCircle className="w-12 h-12 text-[#9b87f5]" />
+              </div>
+              <h3 className="text-2xl font-bold">Diagnóstico Completo!</h3>
+              <p className="text-gray-600 font-medium">
+                <span className="font-bold text-[#ea384c]">Atenção:</span> Detectamos que <span className="font-bold text-[#9b87f5]">suas células de gordura estão inflamadas.</span><br />
+                Isso cria uma barreira poderosa contra o emagrecimento, impedindo você de perder peso mesmo fazendo dieta.<br /><br />
+                Mas existe solução! Nosso método atua diretamente na <strong>desinflamação dessas células</strong> para desbloquear o seu potencial de queima de gordura.
+              </p>
+              <div className="bg-[#e5deff] p-4 rounded-lg text-left animate-fade-in">
+                <h4 className="font-bold mb-2">Resumo do seu diagnóstico:</h4>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <Circle className="min-w-4 h-4 text-[#9b87f5] mt-1" />
+                    <span>Já tentou diversas abordagens sem sucesso duradouro</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Circle className="min-w-4 h-4 text-[#9b87f5] mt-1" />
+                    <span>Está frustrado(a) com promessas não cumpridas</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Circle className="min-w-4 h-4 text-[#9b87f5] mt-1" />
+                    <span>Suas células de gordura estão inflamadas, bloqueando o emagrecimento</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Circle className="min-w-4 h-4 text-[#9b87f5] mt-1" />
+                    <span>Precisa de um método que mude essa realidade de uma vez por todas</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="bg-[#F97316]/10 border-t border-b py-4 my-4 animate-fade-in">
+                <p className="font-bold text-lg text-[#ea384c]">EXCLUSIVO:</p>
+                <p className="text-[#9b87f5] font-bold text-xl mb-2 animate-pulse">Método para Desinflamar as Células & Destravar a Queima de Gordura</p>
+                <p className="text-sm">🌟 Restam apenas <span className="font-bold text-[#ea384c]">17 vagas</span>. Esta oportunidade expira em <span className="font-bold text-[#F97316]">30 minutos</span>!</p>
+              </div>
+              <div className="space-y-3 animate-fade-in">
+                <input
+                  type="email"
+                  placeholder="Seu melhor email"
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#9b87f5]"
+                />
+                <Button
+                  className="
+                    w-full
+                    rounded-full
+                    bg-[linear-gradient(90deg,_#fbc2eb_0%,_#a6c1ee_100%)]
+                    shadow-none
+                    border-none
+                    py-3
+                    px-4
+                    text-base
+                    font-semibold
+                    text-[#1A1F2C]
+                    tracking-wide
+                    transition
+                    duration-150
+                    hover:brightness-105
+                    hover:scale-105
+                    focus:ring-2
+                    focus:ring-[#a6c1ee]/50
+                    outline-none
+                    text-wrap
+                    break-words
+                  "
+                  style={{
+                    letterSpacing: "0.04em",
+                  }}
+                  onClick={playButtonSound}
+                >
+                  Desbloquear Meu Plano Agora! 🔓
+                </Button>
+                <p className="text-xs text-gray-500 mt-2">
+                  Ao clicar, você concorda com nossos termos e política de privacidade.
+                  Seus dados estão seguros e não serão compartilhados.
+                </p>
+                <p className="text-[13px] font-bold mt-3 text-[#9b87f5] animate-pulse">
+                  Última chance! Vagas limitadas 🚨
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Index;
